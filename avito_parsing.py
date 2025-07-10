@@ -89,15 +89,15 @@ class AvitoParser:
         self.driver.get(self.url)
         time.sleep(5)
 
-        try:
-            no_results = self.driver.find_element(
-                By.CSS_SELECTOR, 'h2.no-results-title-f6Tng'
-            )
-            if "Ничего не найдено" in no_results.text:
-                print("Нет товаров в выбранной области поиска")
-                return []  # Возвращаем пустой список
-        except NoSuchElementException:
-            pass  # Сообщение не найдено, продолжаем парсинг
+        #try:
+        #    no_results = self.driver.find_element(
+        #        By.CSS_SELECTOR, 'h2.no-results-title-f6Tng'
+        #    )
+        #    if "Ничего не найдено" in no_results.text:
+        #        print("Нет товаров в выбранной области поиска")
+        #        return []  # Возвращаем пустой список
+        #except NoSuchElementException:
+        #    pass  # Сообщение не найдено, продолжаем парсинг
         
         items = []
         cards = self.driver.find_elements(By.CSS_SELECTOR, 'div[data-marker="item"]')
