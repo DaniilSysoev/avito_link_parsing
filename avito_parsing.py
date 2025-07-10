@@ -47,43 +47,17 @@ class AvitoParser:
         )
         return driver
 
-    def load_seen_items(self) -> Dict[str, AvitoItem]:
-        """Загружает ранее сохраненные данные из файла с обработкой ошибок"""
-        if not os.path.exists(self.data_file):
-            return {}
-
-        try:
+    def load_seen_items(self) -> dict[str, AvitoItem]:
+        if os.path.exists(self.data_file):
             with open(self.data_file, 'r', encoding='utf-8') as f:
-                # Читаем весь файл и удаляем возможные лишние скобки
-                raw_data = f.read().strip()
-                if not raw_data:
-                    return {}
-
-                # Обработка случая с несколькими JSON объектами
-                if raw_data.startswith('[') and raw_data.endswith(']'):
-                    data = json.loads(raw_data)
-                else:
-                    # Попробуем восстановить поврежденный JSON
-                    cleaned_data = f'[{raw_data.replace("}{", "},{")}]'
-                    data = json.loads(cleaned_data)
-
+                data = json.load(f)
                 return {item['url']: AvitoItem(**item) for item in data}
-
-        except (json.JSONDecodeError, KeyError, AttributeError) as e:
-            print(f"Ошибка загрузки файла данных: {e}. Будет создан новый файл.")
-            return {}
+        return {}
 
     def save_seen_items(self):
-        """Сохраняет данные в формате корректного JSON"""
-        try:
-            with open(self.data_file, 'w', encoding='utf-8') as f:
-                items = [asdict(item) for item in self.seen_items.values()]
-                json.dump(items, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Ошибка сохранения данных: {e}")
-            # Создаем резервную копию поврежденного файла
-            if os.path.exists(self.data_file):
-                os.rename(self.data_file, f"{self.data_file}.corrupted_{int(time.time())}")
+        with open(self.data_file, 'a', encoding='utf-8') as f:
+            items = [asdict(item) for item in self.seen_items.values()]
+            json.dump(items, f, ensure_ascii=False, indent=2)
 
     def parse_page(self) -> List[AvitoItem]:
         self.driver.get(self.url)
