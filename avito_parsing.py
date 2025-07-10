@@ -3,9 +3,8 @@ import os
 import time
 from dataclasses import dataclass, asdict
 from typing import List, Dict
-
-from selenium.webdriver.common.by import By
 import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
 
 @dataclass
 class AvitoItem:
@@ -20,8 +19,32 @@ class AvitoParser:
     def __init__(self, url: str, data_file: str = 'parsed_data.json'):
         self.url = url
         self.data_file = data_file
-        self.driver = uc.Chrome(headless=True, version_main=114)
+        self.driver = self._init_driver()
         self.seen_items = self.load_seen_items()
+
+    def _init_driver(self):
+        options = uc.ChromeOptions()
+        
+        # Настройки для Linux сервера
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--headless=new')
+        
+        # Настройки для обхода защиты
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')
+        
+        # Указываем явный путь к Chrome
+        options.binary_location = '/usr/bin/chromium-browser'
+        
+        driver = uc.Chrome(
+            options=options,
+            version_main=114,  # Укажите вашу версию Chrome
+            driver_executable_path='/usr/bin/chromedriver'
+        )
+        return driver
 
     def load_seen_items(self) -> dict[str, AvitoItem]:
         if os.path.exists(self.data_file):
