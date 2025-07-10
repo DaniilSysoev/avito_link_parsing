@@ -61,54 +61,83 @@ class AvitoParser:
 
     def parse_page(self) -> List[AvitoItem]:
         self.driver.get(self.url)
-        time.sleep(5)  # Ожидание загрузки страницы
+        time.sleep(5)
         
         items = []
         cards = self.driver.find_elements(By.CSS_SELECTOR, 'div[data-marker="item"]')
         
         for card in cards:
             try:
-                # Находим нижний блок объявления
-                bottom_block = card.find_element(By.CSS_SELECTOR, '.iva-item-bottomBlock-VewGa')
+                # Инициализация переменных с значениями по умолчанию
+                title = "Без названия"
+                price = "Цена не указана"
+                url = "Ссылка недоступна"
+                description = "Описание не указано"
+                location = "Местоположение не указано"
+                date = "Дата не указана"
                 
-                # Парсинг заголовка
-                title = card.find_element(By.CSS_SELECTOR, '[itemprop="name"], h2').text.strip()
-                
-                # Парсинг цены
-                price = card.find_element(By.CSS_SELECTOR, '[itemprop="price"], [data-marker="item-price"]').get_attribute('content') + ' ₽'
-                
-                # Парсинг ссылки
-                url = 'https://www.avito.ru' + card.find_element(By.CSS_SELECTOR, 'a[data-marker="item-title"]').get_attribute('href')
-                
-                # Парсинг описания через нижний блок
                 try:
-                    description = bottom_block.find_element(
-                        By.CSS_SELECTOR, 'p.styles-module-root-PYlie, .iva-item-descriptionStep-Qp8li'
-                    ).text.strip()
+                    # Парсинг заголовка
+                    title_elem = card.find_element(By.CSS_SELECTOR, '[itemprop="name"], h3, h2')
+                    title = title_elem.text.strip()
                 except NoSuchElementException:
-                    description = "Описание не указано"
+                    pass
                 
-                # Парсинг местоположения
-                location = bottom_block.find_element(
-                    By.CSS_SELECTOR, '[data-marker="item-address"], .iva-item-geo-OW9Hc'
-                ).text.strip()
+                try:
+                    # Парсинг цены с защитой от None
+                    price_elem = card.find_element(By.CSS_SELECTOR, '[itemprop="price"], [data-marker="item-price"]')
+                    price_content = price_elem.get_attribute('content')
+                    price = f"{price_content} ₽" if price_content else price_elem.text.strip()
+                except NoSuchElementException:
+                    pass
                 
-                # Парсинг даты
-                date = bottom_block.find_element(
-                    By.CSS_SELECTOR, '[data-marker="item-date"], .iva-item-dateInfoStep-AoWrh'
-                ).text.strip()
+                try:
+                    # Парсинг ссылки с защитой от None
+                    link_elem = card.find_element(By.CSS_SELECTOR, 'a[data-marker="item-title"]')
+                    href = link_elem.get_attribute('href')
+                    if href:
+                        url = f"https://www.avito.ru{href}" if not href.startswith('http') else href
+                except NoSuchElementException:
+                    pass
                 
-                item = AvitoItem(
+                try:
+                    # Парсинг описания
+                    description_elem = card.find_element(
+                        By.CSS_SELECTOR, 'p.styles-module-root-PYlie, .iva-item-descriptionStep-Qp8li, [data-marker="item-description"]'
+                    )
+                    description = description_elem.text.strip()
+                except NoSuchElementException:
+                    pass
+                
+                try:
+                    # Парсинг местоположения
+                    location_elem = card.find_element(
+                        By.CSS_SELECTOR, '[data-marker="item-address"], .iva-item-geo-OW9Hc, [class*="geo-"]'
+                    )
+                    location = location_elem.text.strip()
+                except NoSuchElementException:
+                    pass
+                
+                try:
+                    # Парсинг даты
+                    date_elem = card.find_element(
+                        By.CSS_SELECTOR, '[data-marker="item-date"], .iva-item-dateInfoStep-AoWrh, [class*="date-"]'
+                    )
+                    date = date_elem.text.strip()
+                except NoSuchElementException:
+                    pass
+                
+                items.append(AvitoItem(
                     title=title,
                     price=price,
                     url=url,
                     description=description,
                     location=location,
                     date=date
-                )
-                items.append(item)
+                ))
+                
             except Exception as e:
-                print(f"Ошибка парсинга карточки: {e}")
+                print(f"Ошибка парсинга карточки: {str(e)[:100]}...")
                 continue
         
         return items
