@@ -52,7 +52,6 @@ def main():
                         try:
                             print(f"  {i}. Отправляем: {item.title[:50]}... (Цена: {item.price})")
                             alert.send_alert(item)
-                            time.sleep(1)  # Небольшая пауза между отправками
                         except Exception as e:
                             print(f"    ⚠️ Ошибка отправки объявления: {str(e)[:100]}...")
                 
