@@ -155,7 +155,7 @@ class AvitoParser:
     def get_new_items(self) -> List[AvitoItem]:
         current_items = self.parse_page()
         new_items = []
-        print(self.seen_items)
+        
         for item in current_items:
             if item.url not in self.seen_items:
                 self.seen_items[item.url] = item
