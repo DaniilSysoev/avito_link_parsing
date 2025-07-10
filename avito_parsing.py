@@ -69,7 +69,7 @@ class AvitoParser:
         for card in cards:
             try:
                 # Находим нижний блок объявления
-                bottom_block = card.find_element(By.CSS_SELECTOR, '.iva-item-bottomBlock-ViewGa')
+                bottom_block = card.find_element(By.CSS_SELECTOR, '.iva-item-bottomBlock-VewGa')
                 
                 # Парсинг заголовка
                 title = card.find_element(By.CSS_SELECTOR, '[itemprop="name"], h2').text.strip()
