@@ -55,9 +55,26 @@ class AvitoParser:
         return {}
 
     def save_seen_items(self):
-        with open(self.data_file, 'w', encoding='utf-8') as f:
-            items = [asdict(item) for item in self.seen_items.values()]
-            json.dump(items, f, ensure_ascii=False, indent=2)
+        """Сохраняет данные в файл, создавая резервную копию при ошибках"""
+        try:
+            # Создаем временный файл для безопасной записи
+            temp_file = self.data_file + '.tmp'
+            
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                items = [asdict(item) for item in self.seen_items.values()]
+                json.dump(items, f, ensure_ascii=False, indent=2)
+            
+            # Заменяем старый файл новым
+            os.replace(temp_file, self.data_file)
+            print(f"Данные успешно сохранены в {self.data_file}")
+            
+        except Exception as e:
+            print(f"Ошибка сохранения данных: {e}")
+            # Создаем резервную копию поврежденного файла
+            if os.path.exists(self.data_file):
+                backup_name = f"{self.data_file}.backup_{int(time.time())}"
+                os.rename(self.data_file, backup_name)
+                print(f"Создана резервная копия: {backup_name}")
 
     def parse_page(self) -> List[AvitoItem]:
         self.driver.get(self.url)
@@ -161,8 +178,8 @@ class AvitoParser:
                 self.seen_items[item.url] = item
                 new_items.append(item)
         
-        if new_items:
-            self.save_seen_items()
+        # Всегда сохраняем данные, даже если новых объявлений нет
+        self.save_seen_items()
         
         return new_items
 

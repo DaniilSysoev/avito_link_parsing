@@ -3,6 +3,8 @@ import random
 from avito_parsing import AvitoParser
 from tg_alert import TelegramAlert
 from dotenv import load_dotenv
+import os
+import json
 
 load_dotenv()
 
@@ -13,9 +15,12 @@ SEARCH_URLS = [
 ]
 
 def main():
+    if not os.path.exists('parsed_data.json'):
+        with open('parsed_data.json', 'w', encoding='utf-8') as f:
+            json.dump([], f)
+
     alert = TelegramAlert()
     parsers = [AvitoParser(url) for url in SEARCH_URLS]
-    
     try:
         while True:
             for parser in parsers:
