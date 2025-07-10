@@ -55,7 +55,7 @@ class AvitoParser:
         return {}
 
     def save_seen_items(self):
-        with open(self.data_file, 'a', encoding='utf-8') as f:
+        with open(self.data_file, 'w', encoding='utf-8') as f:
             items = [asdict(item) for item in self.seen_items.values()]
             json.dump(items, f, ensure_ascii=False, indent=2)
 
