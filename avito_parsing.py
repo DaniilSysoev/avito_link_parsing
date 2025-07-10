@@ -79,23 +79,43 @@ class AvitoParser:
     def parse_page(self) -> List[AvitoItem]:
         self.driver.get(self.url)
         time.sleep(5)
-
-        #try:
-        #    no_results = self.driver.find_element(
-        #        By.CSS_SELECTOR, 'h2.no-results-title-f6Tng'
-        #    )
-        #    if "Ничего не найдено" in no_results.text:
-        #        print("Нет товаров в выбранной области поиска")
-        #        return []  # Возвращаем пустой список
-        #except NoSuchElementException:
-        #    pass  # Сообщение не найдено, продолжаем парсинг
         
         items = []
+        
+        # Проверяем наличие сообщения "Ничего не найдено"
+        try:
+            no_results = self.driver.find_element(
+                By.CSS_SELECTOR, 'h2.no-results-title-f6Tng'
+            )
+            if "Ничего не найдено" in no_results.text:
+                print("Нет товаров в выбранной области поиска")
+                return []
+        except NoSuchElementException:
+            pass
+        
+        # Проверяем наличие блока с объявлениями из других городов
+        try:
+            other_cities_block = self.driver.find_element(
+                By.CSS_SELECTOR, 'div.items-extraTitle-en7fx h2.styles-module-root-KWbDd'
+            )
+            if "объявлений есть в других городах" in other_cities_block.text:
+                print(f"Найдено сообщение: {other_cities_block.text.strip()}")
+        except NoSuchElementException:
+            pass
+        
+        # Парсим только объявления до блока с другими городами
         cards = self.driver.find_elements(By.CSS_SELECTOR, 'div[data-marker="item"]')
         
         for card in cards:
             try:
-                # Инициализация переменных с значениями по умолчанию
+                # Проверяем, не является ли карточка частью блока других городов
+                try:
+                    card.find_element(By.XPATH, './/ancestor::div[contains(@class, "items-extraContent-duy3l")]')
+                    continue  # Пропускаем объявления из других городов
+                except NoSuchElementException:
+                    pass
+                
+                # Парсинг данных объявления
                 title = "Без названия"
                 price = "Цена не указана"
                 url = "Ссылка недоступна"
@@ -104,14 +124,12 @@ class AvitoParser:
                 date = "Дата не указана"
                 
                 try:
-                    # Парсинг заголовка
                     title_elem = card.find_element(By.CSS_SELECTOR, '[itemprop="name"], h3, h2')
                     title = title_elem.text.strip()
                 except NoSuchElementException:
                     pass
                 
                 try:
-                    # Парсинг цены с защитой от None
                     price_elem = card.find_element(By.CSS_SELECTOR, '[itemprop="price"], [data-marker="item-price"]')
                     price_content = price_elem.get_attribute('content')
                     price = f"{price_content} ₽" if price_content else price_elem.text.strip()
@@ -119,7 +137,6 @@ class AvitoParser:
                     pass
                 
                 try:
-                    # Парсинг ссылки с защитой от None
                     link_elem = card.find_element(By.CSS_SELECTOR, 'a[data-marker="item-title"]')
                     href = link_elem.get_attribute('href')
                     if href:
@@ -128,7 +145,6 @@ class AvitoParser:
                     pass
                 
                 try:
-                    # Парсинг описания
                     description_elem = card.find_element(
                         By.CSS_SELECTOR, 'p.styles-module-root-PYlie, .iva-item-descriptionStep-Qp8li, [data-marker="item-description"]'
                     )
@@ -137,7 +153,6 @@ class AvitoParser:
                     pass
                 
                 try:
-                    # Парсинг местоположения
                     location_elem = card.find_element(
                         By.CSS_SELECTOR, '[data-marker="item-address"], .iva-item-geo-OW9Hc, [class*="geo-"]'
                     )
@@ -146,7 +161,6 @@ class AvitoParser:
                     pass
                 
                 try:
-                    # Парсинг даты
                     date_elem = card.find_element(
                         By.CSS_SELECTOR, '[data-marker="item-date"], .iva-item-dateInfoStep-AoWrh, [class*="date-"]'
                     )
@@ -167,6 +181,7 @@ class AvitoParser:
                 print(f"Ошибка парсинга карточки: {str(e)[:100]}...")
                 continue
         
+        print(f"Найдено {len(items)} объявлений в текущем городе")
         return items
 
     def get_new_items(self) -> List[AvitoItem]:
