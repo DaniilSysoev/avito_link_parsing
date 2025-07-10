@@ -30,3 +30,18 @@ class TelegramAlert:
         
         response = requests.post(self.base_url, data=payload)
         return response.json()
+    
+    def send_no_results_alert(self, search_url: str):
+        message = (
+            f"🔍 *Нет товаров в выбранной области поиска*\n"
+            f"Ссылка: {search_url}\n"
+            f"Время проверки: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        )
+        
+        payload = {
+            'chat_id': self.chat_id,
+            'text': message,
+            'parse_mode': 'Markdown'
+        }
+        
+        requests.post(self.base_url, data=payload)

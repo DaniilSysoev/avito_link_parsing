@@ -20,7 +20,11 @@ def main():
         while True:
             for parser in parsers:
                 try:
-                    new_items = parser.get_new_items()
+                    items = parser.parse_page()
+                    if not items:
+                        alert.send_no_results_alert(url)
+                        continue
+                    new_items = [item for item in items if item.url not in parser.seen_items]
                     for item in new_items:
                         print(f"Найдено новое объявление: {item.title}")
                         alert.send_alert(item)
