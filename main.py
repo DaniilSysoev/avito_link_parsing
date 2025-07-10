@@ -20,28 +20,60 @@ def main():
         while True:
             for parser in parsers:
                 try:
+                    print(f"\nНачинаем парсинг URL: {parser.url}")
+                    
+                    # Парсим страницу
                     items = parser.parse_page()
+                    
+                    # Обработка пустого результата
                     if not items:
-                        alert.send_no_results_alert(url)
+                        print("⚠️ Объявления не найдены или не соответствуют фильтру города")
+                        alert.send_no_results_alert(parser.url)
                         continue
+                        
+                    print(f"🔍 Найдено {len(items)} объявлений (после фильтрации)")
+                    
+                    # Фильтруем новые объявления
                     new_items = [item for item in items if item.url not in parser.seen_items]
-                    for item in new_items:
-                        print(f"Найдено новое объявление: {item.title}")
-                        alert.send_alert(item)
-                        #time.sleep(1)  # Пауза между отправками
+                    
+                    if not new_items:
+                        print("ℹ️ Новых объявлений не обнаружено")
+                        continue
+                        
+                    print(f"✨ Найдено {len(new_items)} новых объявлений")
+                    
+                    # Отправляем уведомления
+                    for i, item in enumerate(new_items, 1):
+                        try:
+                            print(f"  {i}. Отправляем: {item.title[:50]}... (Цена: {item.price})")
+                            alert.send_alert(item)
+                            time.sleep(1)  # Небольшая пауза между отправками
+                        except Exception as e:
+                            print(f"    ⚠️ Ошибка отправки объявления: {str(e)[:100]}...")
+                
                 except Exception as e:
-                    print(f"Ошибка при парсинге: {e}")
+                    print(f"🔥 Критическая ошибка при обработке URL {parser.url}: {str(e)[:200]}...")
+                    continue
             
-            # Случайная пауза от 1 до 10 минут
+            # Случайная пауза между проверками
             sleep_time = random.randint(60, 600)
-            print(f"Следующая проверка через {sleep_time//60} минут")
+            mins = sleep_time // 60
+            print(f"\n⏳ Следующая проверка через {mins} минут ({sleep_time} секунд)")
             time.sleep(sleep_time)
     
     except KeyboardInterrupt:
-        print("Остановка парсера...")
+        print("\n🛑 Парсер остановлен по запросу пользователя")
+    except Exception as e:
+        print(f"\n💥 Неожиданная ошибка в основном цикле: {e}")
     finally:
+        print("\n🧹 Завершаем работу...")
         for parser in parsers:
-            parser.close()
+            try:
+                parser.close()
+                print(f"Закрыт парсер для {parser.url}")
+            except Exception as e:
+                print(f"Ошибка при закрытии парсера: {e}")
+        print("Работа завершена")
 
 if __name__ == "__main__":
     main()
