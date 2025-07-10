@@ -67,7 +67,7 @@ class AvitoParser:
         
         for card in cards:
             try:
-                title_elem = card.find_element(By.CSS_SELECTOR, 'h3[itemprop="name"]')
+                title_elem = card.find_element(By.CSS_SELECTOR, 'h2[itemprop="name"]')
                 title = title_elem.text.strip()
                 
                 price_elem = card.find_element(By.CSS_SELECTOR, 'meta[itemprop="price"]')
