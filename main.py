@@ -50,7 +50,11 @@ def main():
                         #logger.info(f'{time.time() - (bot_working_alert_ts)}')
                         logger.info(f'{bot_working_alert_ts}')
                         logger.info(f'{time.time()}')
-                        if not bot_working_alert_ts or time.time() - bot_working_alert_ts > 60*60*12:
+                        if not bot_working_alert_ts:
+                            bot_working_alert_ts = time.time()
+                            alert.send_no_results_alert(parser.url)
+                        elif time.time() - bot_working_alert_ts > 60*60*12:
+                            logger.info("Бот не работает более 12 часов, отправляем уведомление")
                             bot_working_alert_ts = time.time()
                             alert.send_no_results_alert(parser.url)
                         #alert.send_no_results_alert(parser.url)
