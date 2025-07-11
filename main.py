@@ -34,6 +34,7 @@ def main():
     alert = TelegramAlert()
     parsers = [AvitoParser(url) for url in SEARCH_URLS]
     try:
+        bot_working_alert_ts = time.time()
         while True:
             for parser in parsers:
                 try:
@@ -45,6 +46,9 @@ def main():
                     # Обработка пустого результата
                     if not items:
                         logger.warning("Объявления не найдены или не соответствуют фильтру города")
+                        if time.time() - bot_working_alert_ts > 60*60*12:
+                            bot_working_alert_ts = time.time()
+                            alert.send_no_results_alert(parser.url)
                         #alert.send_no_results_alert(parser.url)
                         continue
                         
