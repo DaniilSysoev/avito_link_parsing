@@ -1,5 +1,6 @@
 import time
 import random
+import logging
 from avito_parsing import AvitoParser
 from tg_alert import TelegramAlert
 from dotenv import load_dotenv
@@ -7,6 +8,17 @@ import os
 import json
 
 load_dotenv()
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('parser.log', encoding='utf-8'),
+        logging.StreamHandler()  # Если нужно дублировать логи в консоль
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Ссылки для парсинга
 SEARCH_URLS = [
@@ -25,59 +37,59 @@ def main():
         while True:
             for parser in parsers:
                 try:
-                    print(f"\nНачинаем парсинг URL: {parser.url}")
+                    logger.info(f"Начинаем парсинг URL: {parser.url}")
                     
                     # Парсим страницу
                     items = parser.parse_page()
                     
                     # Обработка пустого результата
                     if not items:
-                        print("⚠️ Объявления не найдены или не соответствуют фильтру города")
-                        alert.send_no_results_alert(parser.url)
+                        logger.warning("Объявления не найдены или не соответствуют фильтру города")
+                        #alert.send_no_results_alert(parser.url)
                         continue
                         
-                    print(f"🔍 Найдено {len(items)} объявлений (после фильтрации)")
+                    logger.info(f"Найдено {len(items)} объявлений (после фильтрации)")
                     
                     # Фильтруем новые объявления
                     new_items = [item for item in items if item.url not in parser.seen_items]
                     
                     if not new_items:
-                        print("ℹ️ Новых объявлений не обнаружено")
+                        logger.info("Новых объявлений не обнаружено")
                         continue
                         
-                    print(f"✨ Найдено {len(new_items)} новых объявлений")
+                    logger.info(f"Найдено {len(new_items)} новых объявлений")
                     
                     # Отправляем уведомления
                     for i, item in enumerate(new_items, 1):
                         try:
-                            print(f"  {i}. Отправляем: {item.title[:50]}... (Цена: {item.price})")
+                            logger.info(f"Отправляем: {item.title[:50]}... (Цена: {item.price})")
                             alert.send_alert(item)
                         except Exception as e:
-                            print(f"    ⚠️ Ошибка отправки объявления: {str(e)[:100]}...")
+                            logger.error(f"Ошибка отправки объявления: {str(e)[:100]}...")
                 
                 except Exception as e:
-                    print(f"🔥 Критическая ошибка при обработке URL {parser.url}: {str(e)[:200]}...")
+                    logger.error(f"Критическая ошибка при обработке URL {parser.url}: {str(e)[:200]}...")
                     continue
             
             # Случайная пауза между проверками
             sleep_time = random.randint(60, 600)
             mins = sleep_time // 60
-            print(f"\n⏳ Следующая проверка через {mins} минут ({sleep_time} секунд)")
+            logger.info(f"Следующая проверка через {mins} минут ({sleep_time} секунд)")
             time.sleep(sleep_time)
     
     except KeyboardInterrupt:
-        print("\n🛑 Парсер остановлен по запросу пользователя")
+        logger.info("Парсер остановлен по запросу пользователя")
     except Exception as e:
-        print(f"\n💥 Неожиданная ошибка в основном цикле: {e}")
+        logger.critical(f"Неожиданная ошибка в основном цикле: {e}")
     finally:
-        print("\n🧹 Завершаем работу...")
+        logger.info("Завершаем работу...")
         for parser in parsers:
             try:
                 parser.close()
-                print(f"Закрыт парсер для {parser.url}")
+                logger.info(f"Закрыт парсер для {parser.url}")
             except Exception as e:
-                print(f"Ошибка при закрытии парсера: {e}")
-        print("Работа завершена")
+                logger.error(f"Ошибка при закрытии парсера: {e}")
+        logger.info("Работа завершена")
 
 if __name__ == "__main__":
     main()
