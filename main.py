@@ -47,7 +47,9 @@ def main():
                     if not items:
                         logger.warning("Объявления не найдены или не соответствуют фильтру города")
                         logger.info(f'{not bot_working_alert_ts}')
-                        logger.info(f'{time.time() - (bot_working_alert_ts)}')
+                        #logger.info(f'{time.time() - (bot_working_alert_ts)}')
+                        logger.info(f'{bot_working_alert_ts}')
+                        logger.info(f'{time.time()}')
                         if not bot_working_alert_ts or time.time() - bot_working_alert_ts > 60*60*12:
                             bot_working_alert_ts = time.time()
                             alert.send_no_results_alert(parser.url)
