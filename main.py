@@ -45,7 +45,7 @@ def main():
                     # Обработка пустого результата
                     if not items:
                         logger.warning("Объявления не найдены или не соответствуют фильтру города")
-                        #alert.send_no_results_alert(parser.url)
+                        alert.send_no_results_alert(parser.url)
                         continue
                         
                     logger.info(f"Найдено {len(items)} объявлений (после фильтрации)")
